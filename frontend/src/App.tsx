@@ -18,7 +18,7 @@ export default function App(){
     for(let i = 0; i < 32; i++){
       let temp:number[] = []
       for(let y = 0; y < 32; y++){
-        const random = Math.floor(Math.random() * 2) + 1
+        const random = Math.floor(Math.random() * 2)
         temp.push(random)
       }
       res.push(temp)
@@ -40,7 +40,7 @@ export default function App(){
       if(matrix[pos[0]][pos[1] - 1] === 1){res++}
     }
     if(pos[0] < matrix.length - 1 && pos[1] < matrix[0].length - 1){
-      if(matrix[pos[0] + 1][pos[1] = 1] === 1){res++}
+      if(matrix[pos[0] + 1][pos[1] + 1] === 1){res++}
     }
     if(pos[0] > 0 && pos[1] > 0){
       if(matrix[pos[0] - 1][pos[1] - 1] === 1){res++}
@@ -73,57 +73,64 @@ export default function App(){
       }
       res += tmp + '\n'
     }
-    setResStr(res)
+    return res
   }
-  function runAnim(){
-    setToast({msg:"Started animation.",ok:true})
-    const interval = setInterval(()=>{
-      let newMatrix = []
-      for(let i = 0; i < matrix.length; i++){
-        let tmp = []
-        for(let x = 0; x < matrix[i].length; x++){
-          tmp.push(determineFate(getAliveNeighbors([i,x],matrix),matrix[i][x]) === true ? 1 : 0)
-        }
-        newMatrix.push(tmp)
-      }
-      setMatrix(newMatrix)
-      visualize()
-    },5000 - (animationSpeed * 1000))
-    if(run === false){
-      setToast({msg:"Stopped animation.",ok:true})
-      clearInterval(interval)
+  useEffect(() => {
+    setResStr(visualize())
+  }, [matrix])
+  useEffect(() => {
+    if (!run) {
+      return
     }
-    clearToast()
-  }
+    const intervalId = window.setInterval(() => {
+      setMatrix((prevMatrix) => {
+        if (prevMatrix.length === 0) {
+          return prevMatrix
+        }
+
+        return prevMatrix.map((row, i) => {
+          return row.map((cell, x) => {
+            return determineFate(getAliveNeighbors([i, x], prevMatrix), cell) ? 1 : 0
+          })
+        })
+      })
+    }, Math.max(500, 5000 - animationSpeed * 1000))
+    return () => {
+      window.clearInterval(intervalId)
+    }
+  }, [run, animationSpeed])
   useEffect(()=>{
     generateMatrix()
   },[])
   return (
-    <div className='font-mono'>
+    <div className='font-mono p-4'>
       <div className='flex justify-center items-center flex-col'>
           <h1 className='text-2xl'>Conway's Game of Life Simulation (32x32)</h1>
+          <h6>⬛:Dead ⬜:Alive</h6>
           <div className='flex justify-center items-center flex-col'>
-            <div>
-              <label htmlFor='animSpeed'>Animation Speed:</label>
+              <label htmlFor='animSpeed'>Animation Speed: {animationSpeed}x</label>
               <input type='range' onChange={(e)=>{
                 setRun(false)
                 setAnimationSpeed(parseFloat(e.target.value))
               }} className='border border-black rounded-lg' max={4.5} min={0.5} value={animationSpeed} />
-            </div>
             <div>
               <button className='border border-black rounded-lg p-2' onClick={()=>{
                 if(run === false){
-                  runAnim()
+                  setRun(true)
+                  setToast({msg:"Started animation.",ok:true})
                 }else{
                   setRun(false)
+                  setToast({msg:"Stopped animation.",ok:true})
+                  setResStr('')
                   generateMatrix()
                 }
+                clearToast()
               }}>{run === false ? 'Run animation' : 'Cancel animation'}</button>
             </div>
           </div>
           <div>
             {run === true && resStr.length > 0 && (
-              <div className='flex justify-center items-center flex-col text-sm'>
+              <div className='text-sm whitespace-pre text-center'>
                 {resStr}
               </div>
             )}
