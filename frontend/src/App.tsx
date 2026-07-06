@@ -139,7 +139,7 @@ export default function App(){
       {toast.msg.length > 0 && (
         <Toast msg={toast.msg} ok={toast.ok}/>
       )}
-      <Github url={'a'}/>
+      <Github url={'https://github.com/bruzz-bruzz/conway-s-game-of-life-simulation'}/>
     </div>
   )
 }
